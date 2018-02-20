@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using Outlook = Microsoft.Office.Interop.Outlook;
 using Office = Microsoft.Office.Core;
 using Kb4o.Keybase;
+using Kb4o.Api;
 
 namespace Kb4o
 {
@@ -13,18 +14,20 @@ namespace Kb4o
     {
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
-            Login login = new Login();
-            Salt salt = login.GetSalt("philwheeler");
+            KeybaseWebService webService = new KeybaseWebService();
+            webService.Login("philwheeler", "'\"B ^ HeJ'SfKgIC*6m\"Wn");
+            //Login login = new Login();
+            //Salt salt = login.GetSalt("philwheeler");
 
-            login.GetUser(salt, "mypassword");
-            login.Invoke();
+            //login.GetUser(salt, "mypassword");
+            //login.Invoke();
 
-            KbServiceBase kbbase = new KbServiceBase() { Endpoint = "login.json", Method = "POST" };
+            //KbServiceBase kbbase = new KbServiceBase() { Endpoint = "login.json", Method = "POST" };
             //KbServiceBase kbbase = new KbServiceBase() { Endpoint = "user/lookup.json" };
             //kbbase.Params.Add("usernames", "philwheeler");
             //kbbase.Endpoint += "?usernames=philwheeler";
 
-            kbbase.Invoke();
+            //kbbase.Invoke();
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)

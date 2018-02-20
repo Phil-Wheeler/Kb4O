@@ -11,51 +11,11 @@ using System.Security.Cryptography;
 
 namespace Kb4o.Keybase
 {
-    public class Login : KbServiceBase
+    public class LoginPassphrase
     {
-        private readonly string loginMethod = "login.json";
-        private readonly string saltMethod = "getsalt.json";
 
-        public Login()
-        { }
-
-        public Salt GetSalt(string claim)
+        public static string ComputePasswordHash(Salt salt, string password)
         {
-            Endpoint = $"{saltMethod}?email_or_username={claim}";
-            Method = "GET";
-
-            string result = "";
-
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create($"{Url}{Endpoint}");
-            request.ContentType = "Content-Type: application/json; charset=utf-8";
-            request.Accept = "application/json";
-            request.Method = Method;
-
-            using (StreamReader reader = new StreamReader(request.GetResponse().GetResponseStream()))
-            {
-                result = reader.ReadToEnd();
-            }
-
-            Salt salt = JsonConvert.DeserializeObject<Salt>(result);
-
-            return salt;
-        }
-
-        public User GetUser(Salt salt, string password)
-        {
-            Endpoint = $"{loginMethod}";
-            Method = "POST";
-            Headers.Add("X-CSRF-Token", salt.csrf_token);
-
-            computePasswordHash(salt, password);
-
-            return new User();
-        }
-
-        private void computePasswordHash(Salt salt, string password)
-        {
-            LoginPost post = new LoginPost();
-
             string binarySalt = String.Join(
                 String.Empty, 
                 salt.salt.Select
@@ -65,7 +25,7 @@ namespace Kb4o.Keybase
             );
 
             string phrase = $"{password}{binarySalt}";
-            int iterations = (int)Math.Pow(2, 15);
+            //int iterations = (int)Math.Pow(2, 15);
 
             //ScryptEncoder encoder = new ScryptEncoder(iterations, 8, 1);
             ScryptEncoder encoder = new ScryptEncoder();
@@ -74,7 +34,7 @@ namespace Kb4o.Keybase
             byte[] v4 = Encoding.UTF8.GetBytes(hash).Skip(192).Take(32).ToArray();
             byte[] v5 = Encoding.UTF8.GetBytes(hash).Skip(224).Take(32).ToArray();
 
-            post.pdpka5 = v5.ToString();
+            string pdpka5 = v5.ToString();
 
             ClientLogin blob = new ClientLogin() {
                 ctime = DateTime.Now.ToFileTimeUtc(),
@@ -98,15 +58,10 @@ namespace Kb4o.Keybase
             };
 
 
-            post.email_or_username = blob.body.key.username;
-
-            Params.Add("email_or_username", post.email_or_username);
-            Params.Add("pdpka5", post.pdpka5);
-
-            string json = JsonConvert.SerializeObject(blob);
+            return JsonConvert.SerializeObject(blob);
         }
 
-        private string GenerateNonce()
+        private static string GenerateNonce()
         {
             string nonce = "";
 
@@ -139,13 +94,6 @@ namespace Kb4o.Keybase
         public int pwh_version { get; set; }
         public string uid { get; set; }
         public string csrf_token { get; set; }
-    }
-
-    class LoginPost
-    {
-        public string email_or_username { get; set; }
-        public string pdpka5 { get; set; }
-        public string pdpka4 { get; set; }
     }
 
 
